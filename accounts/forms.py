@@ -16,17 +16,19 @@ class RegisterForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['email', 'username']
+        fields = ['username','email', ]
 
     def clean_username(self):
         '''
         Verify email is available.
         '''
-        email = self.cleaned_data.get('email')
+        user = self.cleaned_data.get('email')
         username = self.cleaned_data.get('username')
         qs = User.objects.filter(username=username)
         if qs.exists():
+            print("error")
             raise forms.ValidationError("username is taken")
+           
         return username
 
     def clean(self):
@@ -39,6 +41,14 @@ class RegisterForm(forms.ModelForm):
         if password is not None and password != password_2:
             self.add_error("password_2", "Your passwords must match")
         return cleaned_data
+    
+    def save(self, commit=True):
+        # Save the provided password in hashed format
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password"])
+        if commit:
+            user.save()
+        return user
 
 
 class UserAdminCreationForm(forms.ModelForm):
